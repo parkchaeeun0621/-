@@ -1,0 +1,49 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+# 데이터 로드
+train_file_path = '/mnt/data/file-VTJwWSuc34jcKpWPSb5Ng3Q0'
+train_data = pd.read_csv(train_file_path)
+
+# 데이터 전처리
+# 결측치 처리
+train_data['Age'].fillna(train_data['Age'].median(), inplace=True)
+train_data['Embarked'].fillna(train_data['Embarked'].mode()[0], inplace=True)
+train_data['Fare'].fillna(train_data['Fare'].median(), inplace=True)
+
+# 'Cabin' 열은 결측치가 많아 제거
+train_data.drop(['Cabin'], axis=1, inplace=True)
+
+# 범주형 데이터 인코딩
+train_data = pd.get_dummies(train_data, columns=['Sex', 'Embarked'], drop_first=True)
+
+# 필요 없는 열 제거
+train_data.drop(['Name', 'Ticket', 'PassengerId'], axis=1, inplace=True)
+
+# 특성과 라벨 분리
+X = train_data.drop('Survived', axis=1)
+y = train_data['Survived']
+
+# 홀드아웃 기법으로 데이터 분할 (훈련:검증 = 80:20)
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 모델 학습
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, y_train)
+
+# 예측 수행
+y_pred = model.predict(X_val)
+
+# 성능 평가
+accuracy = accuracy_score(y_val, y_pred)
+precision = precision_score(y_val, y_pred)
+recall = recall_score(y_val, y_pred)
+f1 = f1_score(y_val, y_pred)
+
+# 성능 결과 출력
+print(f'Accuracy: {accuracy:.4f}')
+print(f'Precision: {precision:.4f}')
+print(f'Recall: {recall:.4f}')
+print(f'F1 Score: {f1:.4f}')
